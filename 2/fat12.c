@@ -27,18 +27,18 @@ int main(int argc, char *argv[])
     }
     
     if(!FatOpenFile(argv[1], ImgFp, &DirEnt))
-	{
-		NewFp = fopen(argv[1], "wb");
-		if(NewFp == NULL)
-		{
-			fprintf(stderr, "%s Can't create\n", argv[1]);
-			exit(EXIT_FAILURE);
-		}
-		
-		FatReadFile(ImgFp, NewFp, DirEnt);
-		
-		fclose(NewFp);
-	}
+    {
+        NewFp = fopen(argv[1], "wb");
+        if(NewFp == NULL)
+        {
+            fprintf(stderr, "%s Can't create\n", argv[1]);
+            exit(EXIT_FAILURE);
+        }
+        
+        FatReadFile(ImgFp, NewFp, DirEnt);
+        
+        fclose(NewFp);
+    }
     
     fclose(ImgFp);
     return 0;
@@ -46,10 +46,10 @@ int main(int argc, char *argv[])
 
 INT32 FatReadFile(FILE *ImgFp, FILE *NewFp, DIRENT DirEnt)
 {
-	UCHAR Buffer[SECTOR_SIZE];
+    UCHAR Buffer[SECTOR_SIZE];
     UINT16 NextEntry = 0, CurrentEntry;
     UINT32 FileSize = DirEnt.FileSize;
-	UINT16 ClusterNumber;
+    UINT16 ClusterNumber;
     
     CurrentEntry = DirEnt.FirstCluster;
     while(CurrentEntry != 0 && NextEntry < 0xFF0)
@@ -58,16 +58,16 @@ INT32 FatReadFile(FILE *ImgFp, FILE *NewFp, DIRENT DirEnt)
         printf("ClusterNumber: 0x%X\n", CurrentEntry);
 #endif
         ClusterNumber = DATA_START_ESCTOR + CurrentEntry - 2;
-		ImgWriteBlock(ClusterNumber, ImgFp, Buffer);
-		if(FileSize < SECTOR_SIZE)
-		{
-			fwrite(Buffer, sizeof(UCHAR), FileSize, NewFp);
-		}else{
-			fwrite(Buffer, sizeof(UCHAR), SECTOR_SIZE, NewFp);
-		}
+        ImgWriteBlock(ClusterNumber, ImgFp, Buffer);
+        if(FileSize < SECTOR_SIZE)
+        {
+            fwrite(Buffer, sizeof(UCHAR), FileSize, NewFp);
+        }else{
+            fwrite(Buffer, sizeof(UCHAR), SECTOR_SIZE, NewFp);
+        }
         FatGetNextCluster(ImgFp, CurrentEntry, &NextEntry);
         CurrentEntry = NextEntry;
-		FileSize -= SECTOR_SIZE;
+        FileSize -= SECTOR_SIZE;
     }
 #if defined(DEBUG)
     printf("ClusterNumber: 0x%X\n", CurrentEntry);
@@ -110,7 +110,32 @@ INT32 FatOpenFile(const CHAR *FileName, FILE *ImgFp, PDIRENT pDirEnt)
     PDIRENT pDirEntSwap;
     UCHAR NameTmp[13] = {0};
     int i, j;
-    
+
+#if defined(DEBUG)  
+    // 遍历根目录条目
+    for(i = ROOT_START_SECTOR; i <= ROOT_END_SECTOR; i++)
+    {
+        ImgWriteBlock(i, ImgFp, Buffer);
+        pDirEntSwap = (PDIRENT)Buffer;
+        for(j = 0; j < SECTOR_SIZE / sizeof(DIRENT); j++)
+        {
+            DirEntSwap = *(pDirEntSwap + j);
+            FileNameCpy(NameTmp, DirEntSwap.Name, sizeof(DirEntSwap.Name));
+            if(strlen(NameTmp))
+            {
+                *pDirEnt = DirEntSwap;
+                printf("SectorNumber: %d\n", i);
+                printf("SectorOffset: %d\n", j);
+                printf("FileName: %-12s\n", NameTmp);
+                printf("FileSize: %d bytes\n", pDirEnt->FileSize);
+                printf("FirstCluster: 0x%X\n", pDirEnt->FirstCluster);
+            }
+        }
+    }
+    printf("\n\n");
+#endif
+ 
+    // 搜索根目录条目
     for(i = ROOT_START_SECTOR; i <= ROOT_END_SECTOR; i++)
     {
         ImgWriteBlock(i, ImgFp, Buffer);
