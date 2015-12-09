@@ -58,7 +58,7 @@ INT32 FatReadFile(FILE *ImgFp, FILE *NewFp, DIRENT DirEnt)
         printf("ClusterNumber: 0x%X\n", CurrentEntry);
 #endif
         ClusterNumber = DATA_START_ESCTOR + CurrentEntry - 2;
-        ImgWriteBlock(ClusterNumber, ImgFp, Buffer);
+        ImgReadBlock(ClusterNumber, ImgFp, Buffer);
         if(FileSize < SECTOR_SIZE)
         {
             fwrite(Buffer, sizeof(UCHAR), FileSize, NewFp);
@@ -89,13 +89,13 @@ INT32 FatGetNextCluster(FILE *ImgFp,
         SizeOffset = CurrentCluster * 2 - CurrentCluster / 2;
         Sectors = SizeOffset / SECTOR_SIZE;
         ExtraBytes = SizeOffset % SECTOR_SIZE;
-        ImgWriteBlock(Sectors + FAT1_START_SECTOR, ImgFp, Buffer);
+        ImgReadBlock(Sectors + FAT1_START_SECTOR, ImgFp, Buffer);
         *NextCluster = *((UINT16 *)&Buffer[ExtraBytes]) & 0x0FFF;
     }else{
         SizeOffset = CurrentCluster * 2 - CurrentCluster / 2 - 1;
         Sectors = SizeOffset / SECTOR_SIZE;
         ExtraBytes = SizeOffset % SECTOR_SIZE;
-        ImgWriteBlock(Sectors + FAT1_START_SECTOR, ImgFp, Buffer);
+        ImgReadBlock(Sectors + FAT1_START_SECTOR, ImgFp, Buffer);
         *NextCluster = (*((UINT16 *)&Buffer[ExtraBytes]) >> 4) 
                         & 0x0FFF;
     }
@@ -115,7 +115,7 @@ INT32 FatOpenFile(const CHAR *FileName, FILE *ImgFp, PDIRENT pDirEnt)
     // 遍历根目录条目
     for(i = ROOT_START_SECTOR; i <= ROOT_END_SECTOR; i++)
     {
-        ImgWriteBlock(i, ImgFp, Buffer);
+        ImgReadBlock(i, ImgFp, Buffer);
         pDirEntSwap = (PDIRENT)Buffer;
         for(j = 0; j < SECTOR_SIZE / sizeof(DIRENT); j++)
         {
@@ -138,7 +138,7 @@ INT32 FatOpenFile(const CHAR *FileName, FILE *ImgFp, PDIRENT pDirEnt)
     // 搜索根目录条目
     for(i = ROOT_START_SECTOR; i <= ROOT_END_SECTOR; i++)
     {
-        ImgWriteBlock(i, ImgFp, Buffer);
+        ImgReadBlock(i, ImgFp, Buffer);
         pDirEntSwap = (PDIRENT)Buffer;
         for(j = 0; j < SECTOR_SIZE / sizeof(DIRENT); j++)
         {
@@ -163,7 +163,7 @@ INT32 FatOpenFile(const CHAR *FileName, FILE *ImgFp, PDIRENT pDirEnt)
     return -1;
 }
 
-INT32 ImgWriteBlock(UINT32 Lba, FILE *ImgFp, UCHAR *Buffer)
+INT32 ImgReadBlock(UINT32 Lba, FILE *ImgFp, UCHAR *Buffer)
 {
     UINT32 ImgByteOffset;
     

@@ -59,17 +59,13 @@ typedef struct _DIRENT
 
 #pragma pack()
 
-INT32 FatReadFile(FILE *ImgFp, FILE *NewFp, DIRENT DirEnt);
-INT32 FatGetNextCluster(FILE *ImgFp, 
-        UINT16 CurrentCluster, 
-        UINT16 *NextCluster);
-INT32 FatOpenFile(const CHAR *FileName, FILE *ImgFp, PDIRENT pDirEnt);
-INT32 ImgReadBlock(UINT32 Lba, FILE *ImgFp, UCHAR *buffer);
-void FileNameCpy(CHAR *FileName1, 
-		const CHAR *FileName2, 
-		UINT32 FileName2Size);
+BOOL FindEntry(const CHAR *FileName, FILE *ImgFp, PDIRENT pDirEnt);
+void FatNameToFileName(CHAR *FileName, 
+        const CHAR *FatName, 
+        UINT32 FatNameSize);
 BOOL FileNameCmp(const CHAR *FileName1, const CHAR *FileName2);
-void Error(int status, const char *format, ...);
+INT32 ImgWriteBlock(UINT32 Lba, FILE *ImgFp, const UCHAR *Buffer);
+INT32 ImgReadBlock(UINT32 Lba, FILE *ImgFp, UCHAR *Buffer);
 
 
 #endif
